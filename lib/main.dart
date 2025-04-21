@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_flip_card/flutter_flip_card.dart';
+import 'Home.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -23,9 +24,10 @@ class _StartingAppState extends State<StartingApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xff202020),
       body: FlipCard(
         animationDuration: Duration(milliseconds: 500),
-        frontWidget: Center(child: Text("Page One")),
+        frontWidget: HomePage(),
         backWidget: Center(child: Text("Page Two")),
         controller: flipo2,
         rotateSide: RotateSide.top,
@@ -63,3 +65,5 @@ class _StartingAppState extends State<StartingApp> {
     );
   }
 }
+
+
