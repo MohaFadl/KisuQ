@@ -38,14 +38,7 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Center(
-                child: Text(
-                  'Hello',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: Image.asset('images/KitsuQ.png' , width: 200, height: 200),
               ),
               const SizedBox(height: 20),
               Center(
