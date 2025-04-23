@@ -28,7 +28,7 @@ String getSearchQuery(String query, String type ) {
             day
           }
           coverImage {
-            large
+            large 
           }
           episodes
           chapters
