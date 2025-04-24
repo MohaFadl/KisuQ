@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../APIServices/GraphQLPain.dart';
+import '../AnimeInfoPage/KitsuQAnimeDetails.dart';
 
 
 
@@ -215,7 +216,17 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
             });
           },
           borderRadius: BorderRadius.circular(16),
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => KitsuQAnimeDetails(
+                  anime: widget.anime,
+                  isRomaji: widget.isRomaji,
+                ),
+              ),
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
