@@ -176,17 +176,25 @@ class KitsuQSearchResults extends StatelessWidget {
 }
 
 class KisuQAnimeCard extends StatefulWidget {
-  final Map anime;
+  final Map<String, dynamic> anime;
   final bool isRomaji;
 
-  const KisuQAnimeCard({super.key, required this.anime, required this.isRomaji});
+  const KisuQAnimeCard({
+    Key? key,
+    required this.anime,
+    required this.isRomaji,
+  }) : super(key: key);
 
   @override
-  _KisuQAnimeCardState createState() => _KisuQAnimeCardState();
+  State<KisuQAnimeCard> createState() => _KisuQAnimeCardState();
 }
 
 class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
-  bool _isPressed = false;
+  static const _bgColor = Color(0xff202020);
+  static const _cardColor = Color(0xff2a2a2a);
+  static const _highlightColor = Color(0xff3a3a3a);
+
+  bool _isHovered = false;
 
   String get cleanedDescription {
     return widget.anime['description']
@@ -196,159 +204,254 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
         .replaceAll('&mdash;', '—')
         .replaceAll('&amp;', '&')
         .replaceAll('&hellip;', '...')
-        .trim() ??
-        '';
+        .trim() ?? 'No description available';
+  }
+
+  String get formattedDate {
+    if (widget.anime['startDate'] == null) return 'Unknown date';
+    final year = widget.anime['startDate']['year']?.toString() ?? '1';
+    final month = widget.anime['startDate']['month']?.toString().padLeft(2, '0') ?? '01';
+    final day = widget.anime['startDate']['day']?.toString().padLeft(2, '0') ?? '01';
+    return '$year-$month-$day';
+  }
+
+  String get seasonInfo {
+    if (widget.anime['season'] == null || widget.anime['seasonYear'] == null) return '';
+    final season = widget.anime['season'].toString().toLowerCase();
+    return '${season[0].toUpperCase()}${season.substring(1)} ${widget.anime['seasonYear']}';
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedScale(
-      duration: const Duration(milliseconds: 200),
-      scale: _isPressed ? 1.02 : 1.0,
-      child: Card(
-        color: Colors.white10,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: InkWell(
-          onHighlightChanged: (isHighlighted) {
-            setState(() {
-              _isPressed = isHighlighted;
-            });
-          },
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => KitsuQAnimeDetails(
-                  anime: widget.anime,
-                  isRomaji: widget.isRomaji,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
+        transformAlignment: Alignment.center,
+        child: Card(
+          color: _cardColor,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 4,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) {
+                    return Scaffold(
+                      backgroundColor: _bgColor,
+                      body: KitsuQAnimeDetails(
+                        anime: widget.anime,
+                        isRomaji: widget.isRomaji,
+                      ),
+                    );
+                  },
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    const begin = Offset(0.0, 0.0);
+                    const end = Offset.zero;
+                    const curve = Curves.easeInOut;
+                    var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                    var offsetAnimation = animation.drive(tween);
+                    var scaleAnimation = Tween(begin: 0.9, end: 1.0).animate(animation);
+
+                    return ScaleTransition(
+                      scale: scaleAnimation,
+                      child: FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      ),
+                    );
+                  },
                 ),
+              );
+            },
+            splashColor: Colors.white.withOpacity(0.1),
+            highlightColor: _highlightColor,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Hero(
+                    tag: 'cover-${widget.anime['id']}',
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        widget.anime['coverImage']['large'] ?? '',
+                        width: 120,
+                        height: 180,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 120,
+                            height: 180,
+                            color: Colors.grey[900],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation(Colors.grey[700]),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 120,
+                            height: 180,
+                            color: Colors.grey[900],
+                            child: const Icon(Icons.broken_image, color: Colors.grey),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Hero(
+                          tag: 'title-${widget.anime['id']}',
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: Text(
+                              widget.isRomaji
+                                  ? widget.anime['title']['romaji'] ?? widget.anime['title']['english'] ?? "No Title"
+                                  : widget.anime['title']['english'] ?? widget.anime['title']['romaji'] ?? "No Title",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            if (widget.anime['startDate'] != null)
+                              _buildMetadataItem(Icons.calendar_month, formattedDate),
+                            if (widget.anime['status'] != null)
+                              _buildMetadataItem(Icons.tv, widget.anime['status'].toString().replaceAll('_', ' ')),
+                            if (seasonInfo.isNotEmpty)
+                              _buildMetadataItem(Icons.event, seasonInfo),
+                            if (widget.anime['studios']?['nodes'] != null && widget.anime['studios']['nodes'].isNotEmpty)
+                              _buildMetadataItem(Icons.theaters, widget.anime['studios']['nodes'][0]['name']),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          children: [
+                            if (widget.anime['episodes'] != null)
+                              _buildMediaInfo(Icons.movie, '${widget.anime['episodes']} Ep'),
+                            if (widget.anime['chapters'] != null)
+                              _buildMediaInfo(Icons.menu_book, '${widget.anime['chapters']} Ch'),
+                            const SizedBox(width: 8),
+                            if (widget.anime['chapters'] != null && widget.anime['volumes'] != null)
+                              if (widget.anime['volumes'] != null)
+                                _buildMediaInfo(Icons.library_books, '${widget.anime['volumes']} Vol'),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if (widget.anime['genres']?.isNotEmpty ?? false)
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: widget.anime['genres']!
+                                .take(3)
+                                .map<Widget>((genre) => Chip(
+                              label: Text(
+                                genre,
+                                style: const TextStyle(fontSize: 12, color: Colors.white),
+                              ),
+                              backgroundColor: Colors.grey[800],
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ))
+                                .toList(),
+                          ),
+                        const SizedBox(height: 12),
+                        if (widget.anime['description'] != null)
+                          Text(
+                            cleanedDescription,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            if (widget.anime['averageScore'] != null)
+                              Row(
+                                children: [
+                                  const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "${widget.anime['averageScore']}",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    widget.anime['coverImage']['large'],
-                    width: 100,
-                    height: 140,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.isRomaji
-                            ? widget.anime['title']['romaji'] ?? widget.anime['title']['english'] ?? "No Title"
-                            : widget.anime['title']['english'] ?? widget.anime['title']['romaji'] ?? "No Title",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          if (widget.anime['startDate'] != null)
-                            Row(
-                              children: [
-                                const Icon(Icons.calendar_today, size: 14, color: Colors.white70),
-                                const SizedBox(width: 4),
-                                Text(
-                                  "${widget.anime['startDate']['year']}-${widget.anime['startDate']['month']?.toString().padLeft(2, '0') ?? '01'}-${widget.anime['startDate']['day']?.toString().padLeft(2, '0') ?? '01'}",
-                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          const SizedBox(width: 12),
-                          if (widget.anime['status'] != null)
-                            Row(
-                              children: [
-                                const Icon(Icons.tv, size: 14, color: Colors.white70),
-                                const SizedBox(width: 4),
-                                Text(
-                                  widget.anime['status'].toString().replaceAll('_', ' '),
-                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      if (widget.anime['description'] != null)
-                        Text(
-                          cleanedDescription,
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          if (widget.anime['averageScore'] != null)
-                            Row(
-                              children: [
-                                const Icon(Icons.star, color: Colors.amber, size: 20),
-                                const SizedBox(width: 4),
-                                Text(
-                                  "${widget.anime['averageScore']} / 100",
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                      if (widget.anime['episodes'] != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.video_library, size: 16, color: Colors.white70),
-                              const SizedBox(width: 4),
-                              Text(
-                                "Episodes: ${widget.anime['episodes']}",
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (widget.anime['chapters'] != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.library_books_outlined, size: 16, color: Colors.white70),
-                              const SizedBox(width: 4),
-                              Text(
-                                "Chapters: ${widget.anime['chapters']}",
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
             ),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildMetadataItem(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[400]),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMediaInfo(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[400]),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
+        ),
+      ],
+    );
+  }
 }
+
+
 
 
 
