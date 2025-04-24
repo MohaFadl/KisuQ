@@ -25,7 +25,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
         ? anime['title']['romaji'] ?? anime['title']['english'] ?? "No Title"
         : anime['title']['english'] ?? anime['title']['romaji'] ?? "No Title";
 
-    final isAnime = anime['type'] == 'ANIME'; // Check if the media is anime
+    final isAnime = anime['type'] == 'ANIME';
 
     return Scaffold(
       backgroundColor: const Color(0xff202020),
@@ -41,7 +41,6 @@ class KitsuQAnimeDetails extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // BACKGROUND COVER
           Positioned.fill(
             child: Image.network(
               coverUrl,
@@ -55,12 +54,12 @@ class KitsuQAnimeDetails extends StatelessWidget {
             ),
           ),
 
-          // MAIN CONTENT
+
           SingleChildScrollView(
             padding: const EdgeInsets.only(top: kToolbarHeight + 40, bottom: 20),
             child: Column(
               children: [
-                // POSTER IMAGE
+
                 Hero(
                   tag: anime['id'] ?? coverUrl,
                   child: ClipRRect(
@@ -75,7 +74,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // DETAILS CARD
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: AnimatedOpacity(
@@ -97,7 +96,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
-                          // Display start date
+
                           if (anime['startDate'] != null)
                             _InfoRow(
                               icon: Icons.calendar_today,
@@ -105,7 +104,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                               "Start Date: ${anime['startDate']['year']}-${anime['startDate']['month']?.toString().padLeft(2, '0') ?? '01'}-${anime['startDate']['day']?.toString().padLeft(2, '0') ?? '01'}",
                             ),
 
-                          // Status of anime/manga
+
                           if (anime['status'] != null)
                             _InfoRow(
                               icon: Icons.tv,
@@ -113,21 +112,21 @@ class KitsuQAnimeDetails extends StatelessWidget {
                               "Status: ${anime['status'].toString().replaceAll('_', ' ')}",
                             ),
 
-                          // Average score
+
                           if (anime['averageScore'] != null)
                             _InfoRow(
                               icon: Icons.star,
                               label: "Average Score: ${anime['averageScore']} / 100",
                             ),
 
-                          // Genre list
+
                           if (anime['genres'] != null && anime['genres'].isNotEmpty)
                             _InfoRow(
                               icon: Icons.category,
                               label: "Genres: ${anime['genres'].join(', ')}",
                             ),
 
-                          // Display episode count if it's anime, chapters/volumes if it's manga
+
                           if (isAnime && anime['episodes'] != null)
                             _InfoRow(
                               icon: Icons.video_library,
@@ -144,7 +143,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                               label: "Volumes: ${anime['volumes']}",
                             ),
 
-                          // Studio Info
+
                           if (anime['studios'] != null && anime['studios']['nodes'].isNotEmpty)
                             _InfoRow(
                               icon: Icons.business,
@@ -156,7 +155,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                   ),
                 ),
 
-                // Recommended anime/manga
+
                 if (anime['recommendations'] != null && anime['recommendations']['nodes'].isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -187,7 +186,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
         final media = recommendation['mediaRecommendation'];
         return GestureDetector(
           onTap: () {
-            // Navigate to recommended anime details
+
           },
           child: Padding(
             padding: const EdgeInsets.only(bottom: 12),
