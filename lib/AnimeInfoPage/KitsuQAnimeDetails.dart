@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
+import '../APIServices/GraphQLPain.dart';
+
 class KitsuQAnimeDetails extends StatelessWidget {
   final Map anime;
   final bool isRomaji;
@@ -191,9 +193,22 @@ class KitsuQAnimeDetails extends StatelessWidget {
             final recommendation = validRecommendations[index];
             final media = recommendation['mediaRecommendation'];
             final genres = media['genres'] as List? ?? [];
+            final id = media['id'];
 
             return GestureDetector(
-              onTap: () {},
+              onTap: () {
+                getAnimeByIdQuery(id);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => KitsuQAnimeDetails(
+                      anime: media,
+                      isRomaji: true,
+                    ),
+                  ),
+                );
+
+              },
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white.withAlpha(20),
@@ -239,7 +254,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                       spacing: 4,
                       runSpacing: 2,
                       children: () {
-                        if (genres != null && genres.isNotEmpty) {
+                        if (genres.isNotEmpty) {
                           return genres.take(4).map<Widget>((genre) {
                             return Chip(
                               label: Text(
