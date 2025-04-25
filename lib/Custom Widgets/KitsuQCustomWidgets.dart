@@ -193,7 +193,6 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
   static const _bgColor = Color(0xff202020);
   static const _cardColor = Color(0xff2a2a2a);
   static const _highlightColor = Color(0xff3a3a3a);
-
   bool _isHovered = false;
 
   String get cleanedDescription {
@@ -204,25 +203,30 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
         .replaceAll('&mdash;', '—')
         .replaceAll('&amp;', '&')
         .replaceAll('&hellip;', '...')
-        .trim() ?? 'No description available';
+        .trim() ??
+        'No description available';
   }
 
   String get formattedDate {
-    if (widget.anime['startDate'] == null) return 'Unknown date';
-    final year = widget.anime['startDate']['year']?.toString() ?? '1';
-    final month = widget.anime['startDate']['month']?.toString().padLeft(2, '0') ?? '01';
-    final day = widget.anime['startDate']['day']?.toString().padLeft(2, '0') ?? '01';
+    final start = widget.anime['startDate'];
+    if (start == null) return 'Unknown';
+    final year = start['year']?.toString() ?? '1';
+    final month = start['month']?.toString().padLeft(2, '0') ?? '01';
+    final day = start['day']?.toString().padLeft(2, '0') ?? '01';
     return '$year-$month-$day';
   }
 
   String get seasonInfo {
-    if (widget.anime['season'] == null || widget.anime['seasonYear'] == null) return '';
-    final season = widget.anime['season'].toString().toLowerCase();
-    return '${season[0].toUpperCase()}${season.substring(1)} ${widget.anime['seasonYear']}';
+    final s = widget.anime['season'];
+    final y = widget.anime['seasonYear'];
+    return (s != null && y != null)
+        ? '${s[0].toUpperCase()}${s.substring(1)} $y'
+        : '';
   }
 
   @override
   Widget build(BuildContext context) {
+    final anime = widget.anime;
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -233,9 +237,7 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
         child: Card(
           color: _cardColor,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
@@ -243,29 +245,17 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
               Navigator.push(
                 context,
                 PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) {
-                    return Scaffold(
-                      backgroundColor: _bgColor,
-                      body: KitsuQAnimeDetails(
-                        anime: widget.anime,
-                        isRomaji: widget.isRomaji,
-                      ),
-                    );
-                  },
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    const begin = Offset(0.0, 0.0);
-                    const end = Offset.zero;
-                    const curve = Curves.easeInOut;
-                    var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                    var offsetAnimation = animation.drive(tween);
-                    var scaleAnimation = Tween(begin: 0.9, end: 1.0).animate(animation);
-
+                  pageBuilder: (_, __, ___) => Scaffold(
+                    backgroundColor: _bgColor,
+                    body: KitsuQAnimeDetails(
+                      anime: anime,
+                      isRomaji: widget.isRomaji,
+                    ),
+                  ),
+                  transitionsBuilder: (_, animation, __, child) {
                     return ScaleTransition(
-                      scale: scaleAnimation,
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      ),
+                      scale: Tween(begin: 0.9, end: 1.0).animate(animation),
+                      child: FadeTransition(opacity: animation, child: child),
                     );
                   },
                 ),
@@ -279,35 +269,28 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Hero(
-                    tag: 'cover-${widget.anime['id']}',
+                    tag: 'cover-${anime['id']}',
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
-                        widget.anime['coverImage']['large'] ?? '',
+                        anime['coverImage']?['large'] ?? '',
                         width: 120,
                         height: 180,
                         fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: 120,
-                            height: 180,
-                            color: Colors.grey[900],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation(Colors.grey[700]),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 120,
-                            height: 180,
-                            color: Colors.grey[900],
-                            child: const Icon(Icons.broken_image, color: Colors.grey),
-                          );
-                        },
+                        loadingBuilder: (_, child, progress) => progress == null
+                            ? child
+                            : Container(
+                          width: 120,
+                          height: 180,
+                          color: Colors.grey[900],
+                          child: const Center(child: CircularProgressIndicator()),
+                        ),
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 120,
+                          height: 180,
+                          color: Colors.grey[900],
+                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                        ),
                       ),
                     ),
                   ),
@@ -317,7 +300,7 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Hero(
-                          tag: 'title-${widget.anime['id']}',
+                          tag: 'title-${anime['id']}',
                           child: Material(
                             type: MaterialType.transparency,
                             child: Text(
@@ -325,9 +308,9 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
                                   ? widget.anime['title']['romaji'] ?? widget.anime['title']['english'] ?? "No Title"
                                   : widget.anime['title']['english'] ?? widget.anime['title']['romaji'] ?? "No Title",
                               style: const TextStyle(
-                                color: Colors.white,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -339,77 +322,65 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
                           spacing: 12,
                           runSpacing: 8,
                           children: [
-                            if (widget.anime['startDate'] != null)
-                              _buildMetadataItem(Icons.calendar_month, formattedDate),
-                            if (widget.anime['status'] != null)
-                              _buildMetadataItem(Icons.tv, widget.anime['status'].toString().replaceAll('_', ' ')),
-                            if (seasonInfo.isNotEmpty)
-                              _buildMetadataItem(Icons.event, seasonInfo),
-                            if (widget.anime['studios']?['nodes'] != null && widget.anime['studios']['nodes'].isNotEmpty)
-                              _buildMetadataItem(Icons.theaters, widget.anime['studios']['nodes'][0]['name']),
+                            _buildMetadataItem(Icons.calendar_month, formattedDate),
+                            if (anime['status'] != null)
+                              _buildMetadataItem(Icons.tv, anime['status'].toString().replaceAll('_', ' ')),
+                            if (seasonInfo.isNotEmpty) _buildMetadataItem(Icons.event, seasonInfo),
+                            if (anime['format'] != null)
+                              _buildMetadataItem(Icons.category, anime['format']),
+                            if (anime['studios']?['nodes']?.isNotEmpty ?? false)
+                              _buildMetadataItem(Icons.business, anime['studios']['nodes'][0]['name']),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Wrap(
+                        Row(
                           children: [
-                            if (widget.anime['episodes'] != null)
-                              _buildMediaInfo(Icons.movie, '${widget.anime['episodes']} Ep'),
-                            if (widget.anime['chapters'] != null)
-                              _buildMediaInfo(Icons.menu_book, '${widget.anime['chapters']} Ch'),
-                            const SizedBox(width: 8),
-                            if (widget.anime['chapters'] != null && widget.anime['volumes'] != null)
-                              if (widget.anime['volumes'] != null)
-                                _buildMediaInfo(Icons.library_books, '${widget.anime['volumes']} Vol'),
+                            if (anime['episodes'] != null)
+                              _buildMediaInfo(Icons.movie, '${anime['episodes']} Ep'),
+                            if (anime['chapters'] != null)
+                              _buildMediaInfo(Icons.menu_book, '${anime['chapters']} Ch'),
+                            if (anime['volumes'] != null)
+                              _buildMediaInfo(Icons.library_books, '${anime['volumes']} Vol'),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        if (widget.anime['genres']?.isNotEmpty ?? false)
+                        if (anime['genres']?.isNotEmpty ?? false)
                           Wrap(
                             spacing: 6,
                             runSpacing: 4,
-                            children: widget.anime['genres']!
+                            children: anime['genres']!
                                 .take(3)
-                                .map<Widget>((genre) => Chip(
-                              label: Text(
-                                genre,
-                                style: const TextStyle(fontSize: 12, color: Colors.white),
+                                .map<Widget>(
+                                  (genre) => Chip(
+                                label: Text(genre, style: const TextStyle(fontSize: 12, color: Colors.white)),
+                                backgroundColor: Colors.grey[800],
+                                visualDensity: VisualDensity.compact,
                               ),
-                              backgroundColor: Colors.grey[800],
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                            ))
+                            )
                                 .toList(),
                           ),
                         const SizedBox(height: 12),
-                        if (widget.anime['description'] != null)
-                          Text(
-                            cleanedDescription,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 13,
-                            ),
-                          ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            if (widget.anime['averageScore'] != null)
-                              Row(
-                                children: [
-                                  const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    "${widget.anime['averageScore']}",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
+                        Text(
+                          cleanedDescription,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
+                        const SizedBox(height: 12),
+                        if (anime['averageScore'] != null)
+                          Row(
+                            children: [
+                              const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                              const SizedBox(width: 4),
+                              Text(
+                                "${anime['averageScore']}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -428,27 +399,22 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
       children: [
         Icon(icon, size: 16, color: Colors.grey[400]),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(color: Colors.grey, fontSize: 12),
-        ),
+        Text(text, style: const TextStyle(color: Colors.grey, fontSize: 12)),
       ],
     );
   }
 
-  Widget _buildMediaInfo(IconData icon, String text) {
-    return Row(
+  Widget _buildMediaInfo(IconData icon, String text) => Padding(
+    padding: const EdgeInsets.only(right: 12),
+    child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 16, color: Colors.grey[400]),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(color: Colors.grey, fontSize: 12),
-        ),
+        Text(text, style: const TextStyle(color: Colors.grey, fontSize: 12)),
       ],
-    );
-  }
+    ),
+  );
 }
 
 
