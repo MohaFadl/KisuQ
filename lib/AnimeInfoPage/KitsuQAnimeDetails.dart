@@ -4,14 +4,21 @@ import 'dart:ui';
 
 import '../APIServices/GraphQLPain.dart';
 
-class KitsuQAnimeDetails extends StatelessWidget {
+class KitsuQAnimeDetails extends StatefulWidget {
   final Map anime;
   final bool isRomaji;
 
   const KitsuQAnimeDetails({super.key, required this.anime, required this.isRomaji});
 
+  @override
+  State<KitsuQAnimeDetails> createState() => _KitsuQAnimeDetailsState();
+}
+
+class _KitsuQAnimeDetailsState extends State<KitsuQAnimeDetails> {
+  int? hoveredIndex;
+
   String get cleanedDescription {
-    return anime['description']?.replaceAll(RegExp(r'<[^>]*>'), '')
+    return widget.anime['description']?.replaceAll(RegExp(r'<[^>]*>'), '')
         .replaceAll('&quot;', '"')
         .replaceAll('&rsquo;', "'")
         .replaceAll('&mdash;', '—')
@@ -22,12 +29,12 @@ class KitsuQAnimeDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coverUrl = anime['coverImage']?['large'] ?? anime['bannerImage'] ?? '';
-    final title = isRomaji
-        ? anime['title']['romaji'] ?? anime['title']['english'] ?? "No Title"
-        : anime['title']['english'] ?? anime['title']['romaji'] ?? "No Title";
+    final coverUrl = widget.anime['coverImage']?['large'] ?? widget.anime['bannerImage'] ?? '';
+    final title = widget.isRomaji
+        ? widget.anime['title']['romaji'] ?? widget.anime['title']['english'] ?? "No Title"
+        : widget.anime['title']['english'] ?? widget.anime['title']['romaji'] ?? "No Title";
 
-    final isAnime = anime['type'] == 'ANIME';
+    final isAnime = widget.anime['type'] == 'ANIME';
 
     return Scaffold(
       backgroundColor: const Color(0xff202020),
@@ -75,7 +82,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
             child: Column(
               children: [
                 Hero(
-                  tag: anime['id'] ?? coverUrl,
+                  tag: widget.anime['id'] ?? coverUrl,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: coverUrl.isNotEmpty
@@ -106,64 +113,100 @@ class KitsuQAnimeDetails extends StatelessWidget {
                           style: const TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                         const SizedBox(height: 16),
-                        if (anime['startDate'] != null)
+                        if (widget.anime['startDate'] != null)
                           _InfoRow(
                             icon: Icons.calendar_today,
                             label:
-                            "Start Date: ${anime['startDate']?['year']}-${anime['startDate']?['month']?.toString().padLeft(2, '0') ?? '01'}-${anime['startDate']?['day']?.toString().padLeft(2, '0') ?? '01'}",
+                            "Start Date: ${widget.anime['startDate']?['year']}-${widget.anime['startDate']?['month']?.toString().padLeft(2, '0') ?? '01'}-${widget.anime['startDate']?['day']?.toString().padLeft(2, '0') ?? '01'}",
                           ),
-                        if (anime['status'] != null)
+                        if (widget.anime['status'] != null)
                           _InfoRow(
                             icon: Icons.tv,
-                            label: "Status: ${anime['status']?.toString().replaceAll('_', ' ')}",
+                            label: "Status: ${widget.anime['status']?.toString().replaceAll('_', ' ')}",
                           ),
-                        if (anime['averageScore'] != null)
+                        if (widget.anime['averageScore'] != null)
                           _InfoRow(
                             icon: Icons.star,
-                            label: "Average Score: ${anime['averageScore']} / 100",
+                            label: "Average Score: ${widget.anime['averageScore']} / 100",
                           ),
-                        if (anime['genres'] != null && anime['genres'].isNotEmpty)
+                        if (widget.anime['genres'] != null && widget.anime['genres'].isNotEmpty)
                           _InfoRow(
                             icon: Icons.category,
-                            label: "Genres: ${anime['genres'].join(', ')}",
+                            label: "Genres: ${widget.anime['genres'].join(', ')}",
                           ),
-                        if (isAnime && anime['episodes'] != null)
+                        if (isAnime && widget.anime['episodes'] != null)
                           _InfoRow(
                             icon: Icons.video_library,
-                            label: "Episodes: ${anime['episodes']}",
+                            label: "Episodes: ${widget.anime['episodes']}",
                           ),
-                        if (!isAnime && anime['chapters'] != null)
+                        if (!isAnime && widget.anime['chapters'] != null)
                           _InfoRow(
                             icon: Icons.library_books,
-                            label: "Chapters: ${anime['chapters']}",
+                            label: "Chapters: ${widget.anime['chapters']}",
                           ),
-                        if (!isAnime && anime['volumes'] != null)
+                        if (!isAnime && widget.anime['volumes'] != null)
                           _InfoRow(
                             icon: Icons.library_books,
-                            label: "Volumes: ${anime['volumes']}",
+                            label: "Volumes: ${widget.anime['volumes']}",
                           ),
-                        if (anime['studios'] != null && anime['studios']?['nodes']?.isNotEmpty ?? false)
+                        if (widget.anime['studios'] != null && widget.anime['studios']?['nodes']?.isNotEmpty ?? false)
                           _InfoRow(
                             icon: Icons.business,
-                            label: "Studio: ${anime['studios']?['nodes']?[0]?['name'] ?? 'N/A'}",
+                            label: "Studio: ${widget.anime['studios']?['nodes']?[0]?['name'] ?? 'N/A'}",
                           ),
                       ],
                     ),
                   ),
                 ),
-                if (anime['recommendations'] != null &&
-                    anime['recommendations']?['nodes']?.isNotEmpty ?? false)
+                if (widget.anime['recommendations'] != null &&
+                    widget.anime['recommendations']?['nodes']?.isNotEmpty ?? false)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if(widget.anime['episodes'] != null)const SizedBox(height: 30),
+                        if(widget.anime['episodes'] != null)const Text(
+                          "Episodes",
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        if(widget.anime['episodes'] != null)const SizedBox(height: 20),
+                        if(widget.anime['episodes'] != null)Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: List.generate(widget.anime['episodes'], (index) {
+                        final isHovered = hoveredIndex == index;
+
+                        return Material(
+                          color: Colors.grey[850],
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+
+
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              child: Text(
+                                '${index + 1}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
                         const SizedBox(height: 50),
                         const Text(
                           "You might also like",
                           style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        _buildRecommendationList(anime['recommendations']?['nodes'] ?? []),
+                        _buildRecommendationList(widget.anime['recommendations']?['nodes'] ?? []),
                       ],
                     ),
                   ),
@@ -307,8 +350,6 @@ class KitsuQAnimeDetails extends StatelessWidget {
       },
     );
   }
-
-
 }
 
 class _InfoRow extends StatelessWidget {
