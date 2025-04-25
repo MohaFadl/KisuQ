@@ -32,13 +32,26 @@ class KitsuQAnimeDetails extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xff202020),
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: AppBar(
+              backgroundColor: Colors.black.withAlpha(10),
+              elevation: 0,
+              centerTitle: true,
+              title: Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
       body: Stack(
@@ -53,8 +66,8 @@ class KitsuQAnimeDetails extends StatelessWidget {
           ),
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-              child: Container(color: Colors.black.withAlpha(15)),
+              filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+              child: Container(color: Colors.black.withAlpha(85)),
             ),
           ),
           SingleChildScrollView(
@@ -81,7 +94,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(10),
+                      color: Colors.white.withAlpha(25),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white12),
                     ),
@@ -222,7 +235,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(20),
+                  color: Colors.white.withAlpha(30),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 padding: const EdgeInsets.all(8),
@@ -252,10 +265,11 @@ class KitsuQAnimeDetails extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
+                        if(media['averageScore'] != null)
                         const Icon(Icons.star, size: 12, color: Colors.amber),
                         const SizedBox(width: 4),
                         Text(
-                          "${media['averageScore'] ?? 'N/A'}",
+                          "${media['averageScore'] ?? ''}",
                           style: const TextStyle(color: Colors.white70, fontSize: 11),
                         ),
                       ],
@@ -280,7 +294,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
                             );
                           }).toList();
                         } else {
-                          return [Text("No genres available")];
+                          return [Text("")];
                         }
                       }(),
                     ),
