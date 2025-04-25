@@ -187,3 +187,17 @@ String getAnimeByIdQuery(int id) {
   """;
 }
 
+
+Future<Map<String, dynamic>> fetchAnimeDetails(int id, GraphQLClient client) async {
+  final QueryOptions options = QueryOptions(
+    document: gql(getAnimeByIdQuery(id)),
+  );
+
+  final QueryResult result = await client.query(options);
+
+  if (result.hasException) {
+    throw Exception("Failed to fetch anime details: ${result.exception}");
+  }
+
+  return result.data?['Media'];
+}

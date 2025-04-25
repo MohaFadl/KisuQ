@@ -197,14 +197,13 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
 
   String get cleanedDescription {
     return widget.anime['description']
-        ?.replaceAll(RegExp(r'<[^>]*>'), '')
+        ?.replaceAll(RegExp(r'<[^>]*>'), ' ')
         .replaceAll('&quot;', '"')
         .replaceAll('&rsquo;', "'")
         .replaceAll('&mdash;', '—')
         .replaceAll('&amp;', '&')
         .replaceAll('&hellip;', '...')
-        .trim() ??
-        'No description available';
+        .trim() ?? 'No description available';
   }
 
   String get formattedDate {
@@ -227,6 +226,11 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
   @override
   Widget build(BuildContext context) {
     final anime = widget.anime;
+
+    if (anime['isAdult'] == true) {
+      return SizedBox.shrink();
+    }
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -416,6 +420,7 @@ class _KisuQAnimeCardState extends State<KisuQAnimeCard> {
     ),
   );
 }
+
 
 
 

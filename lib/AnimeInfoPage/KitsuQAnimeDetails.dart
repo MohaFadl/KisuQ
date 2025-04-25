@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
@@ -177,7 +178,7 @@ class KitsuQAnimeDetails extends StatelessWidget {
         const minCardWidth = 160.0;
         final crossAxisCount = (constraints.maxWidth / minCardWidth).floor();
         final cardWidth = constraints.maxWidth / crossAxisCount;
-        final cardHeight = cardWidth * 2.8;
+        final cardHeight = cardWidth * 2.9;
 
         return GridView.builder(
           shrinkWrap: true,
@@ -196,17 +197,27 @@ class KitsuQAnimeDetails extends StatelessWidget {
             final id = media['id'];
 
             return GestureDetector(
-              onTap: () {
-                getAnimeByIdQuery(id);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => KitsuQAnimeDetails(
-                      anime: media,
-                      isRomaji: true,
+              onTap: () async {
+                final id = recommendation['mediaRecommendation']['id'];
+
+                try {
+                  final client = await initGraphQLClient().value;
+                  final animeDetails = await fetchAnimeDetails(id, client);
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => KitsuQAnimeDetails(
+                        anime: animeDetails,
+                        isRomaji: true,
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } catch (e) {
+                  if (kDebugMode) {
+                    print("Error fetching anime details: $e");
+                  }
+                }
 
               },
               child: Container(
